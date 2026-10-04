@@ -3,8 +3,6 @@ package com.kayo.libraryapi.repository;
 import com.kayo.libraryapi.model.Autor;
 import com.kayo.libraryapi.model.GeneroLivro;
 import com.kayo.libraryapi.model.Livro;
-import jakarta.persistence.ManyToOne;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -44,11 +42,10 @@ public interface LivroRepository extends JpaRepository<Livro, UUID> {
 
     //lidando com Querys maiores """..."""
     @Query("""
-            select l.genero from Livro l join l.autor a where a.nascionalidade = 'Brasileiro'
+            select l.genero from Livro l join l.autor a where a.nacionalidade = 'Brasileiro'
             order by l.genero
             """)
     List<String> OrdenarPorNascionalidadeBrasileira();
-
 
     //Querys com parametros ---->>>
     @Query(" select l.genero from Livro l where l.genero = :generoParam")
@@ -76,8 +73,10 @@ public interface LivroRepository extends JpaRepository<Livro, UUID> {
 
     @Modifying
     @Transactional
-    @Query(" update Livro set data_publicada = ?1") //Não é muito utilizado dessa forma, dessa forma, todos os livros são mudados para a data inserida. Para isso não acontecer utilizamos o where
+    @Query(" update Livro set data_publicada = ?1")
+        //Não é muito utilizado dessa forma, dessa forma, todos os livros são mudados para a data inserida. Para isso não acontecer utilizamos o where
     void updateDataPublicacao(LocalDate novaData);
 
+    boolean existsByAutor(Autor autor);
 
 }

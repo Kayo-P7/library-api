@@ -36,12 +36,12 @@ class LivroRepositoryTest {
         Livro livro = new Livro();
 
 
-        livro.setIsnb("77098-83945");
+        livro.setIsbn("77098-83945");
         livro.setGenero(GeneroLivro.FANTASIA);
         livro.setPreco(BigDecimal.valueOf(150));
         livro.setData_publicada(LocalDate.of(2019, 6, 27));
         livro.setTitulo("No Fantasy");
-        Autor autor = autorRepository.findById(UUID.fromString("4682445a-f1ae-48c5-bf85-55a47e68c66b")).orElse(null);
+        Autor autor = autorRepository.findById(UUID.fromString("02fea7ff-c306-4a9f-be9b-72aab8a57694")).orElse(null);
         livro.setAutor(autor);
         livroRepository.save(livro);
     }
@@ -53,7 +53,7 @@ class LivroRepositoryTest {
         Livro livro = new Livro();
 
 
-        livro.setIsnb("77098-89903");
+        livro.setIsbn("77098-89903");
         livro.setGenero(GeneroLivro.CIENCIA);
         livro.setPreco(BigDecimal.valueOf(150));
         livro.setData_publicada(LocalDate.of(2012, 12, 27));
@@ -61,9 +61,9 @@ class LivroRepositoryTest {
 
         Autor autor = new Autor();
         autor.setNome("Kayden Albert");
-        autor.setNascionalidade("Brasileiro");
-        autor.setData_nascimento(LocalDate.of(2000, 07, 23));
-        //Com o cascade o autor vai ser salvo junto, mas isso não é muito utilizado em projetos profissionais
+        autor.setNacionalidade("Brasileiro");
+        autor.setDataNascimento(LocalDate.of(2000, 07, 23));
+        //Com o cascade o autorId vai ser salvo junto, mas isso não é muito utilizado em projetos profissionais
         livro.setAutor(autor);
 
         livroRepository.save(livro);
@@ -75,7 +75,7 @@ class LivroRepositoryTest {
         Livro livro = new Livro();
 
 
-        livro.setIsnb("6845098-89903");
+        livro.setIsbn("6845098-89903");
         livro.setGenero(GeneroLivro.FANTASIA);
         livro.setPreco(BigDecimal.valueOf(150));
         livro.setData_publicada(LocalDate.of(2019, 10, 27));
@@ -83,19 +83,19 @@ class LivroRepositoryTest {
 
         Autor autor = new Autor();
         autor.setNome("Kayden Vincyt");
-        autor.setNascionalidade("Brasileiro");
-        autor.setData_nascimento(LocalDate.of(2000, 07, 23));
+        autor.setNacionalidade("Brasileiro");
+        autor.setDataNascimento(LocalDate.of(2000, 07, 23));
         //Com o cascade o auto
         // vai ser salvo junto, mas isso não é muito utilizado em projetos profissionais
-       // autorRepository.save(autor);
-        //livro.setAutor(autor);
+       // autorRepository.save(autorId);
+        //livro.setAutor(autorId);
 
         livroRepository.save(livro);
     }
 
     @Test
     @Transactional
-    //faz com que o autor seja carregado, porque no ManyToOne da classe livro está como LAZY e só estava carregando o livro. Se fosse Eager carregaria os dois
+    //faz com que o autorId seja carregado, porque no ManyToOne da classe livro está como LAZY e só estava carregando o livro. Se fosse Eager carregaria os dois
     public void buscarLivro() {
         var id = UUID.fromString("5414e702-d6c9-4243-9677-c237af9ddb13");
         Livro livro = livroRepository.findById(id).orElse(null);

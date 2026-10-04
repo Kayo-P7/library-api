@@ -28,8 +28,8 @@ public class AutorRepositoryTest {
     public void salvar() {
         Autor autor = new Autor();
         autor.setNome("Kayden Ford-P.A");
-        autor.setNascionalidade("Brasileiro");
-        autor.setData_nascimento(LocalDate.of(2006, 06, 18));
+        autor.setNacionalidade("Brasileiro");
+        autor.setDataNascimento(LocalDate.of(2006, 06, 18));
 
         var autorSalvo = autorRepository.save(autor);
 
@@ -69,7 +69,7 @@ public class AutorRepositoryTest {
         if (autorEncontrado.isPresent()) {
             System.out.println("Autor encontrado: ");
             System.out.println(autorEncontrado.get());
-            System.out.println("autor deletado!");
+            System.out.println("autorId deletado!");
             autorRepository.deleteById(id);
 
         }
@@ -82,11 +82,11 @@ public class AutorRepositoryTest {
 
         Autor autor = new Autor();
         autor.setNome("Smile.A.S");
-        autor.setData_nascimento(LocalDate.of(1980, 07, 20));
-        autor.setNascionalidade("Argentino");
+        autor.setDataNascimento(LocalDate.of(1980, 07, 20));
+        autor.setNacionalidade("Argentino");
 
         Livro livro = new Livro();
-        livro.setIsnb("770098-89903");
+        livro.setIsbn("770098-89903");
         livro.setGenero(GeneroLivro.BIOGRAFIA);
         livro.setPreco(BigDecimal.valueOf(200));
         livro.setData_publicada(LocalDate.of(2016, 05, 12));
@@ -94,7 +94,7 @@ public class AutorRepositoryTest {
         livro.setAutor(autor);
 
         Livro livro2 = new Livro();
-        livro2.setIsnb("9450098-89903");
+        livro2.setIsbn("9450098-89903");
         livro2.setGenero(GeneroLivro.BIOGRAFIA);
         livro2.setPreco(BigDecimal.valueOf(200));
         livro2.setData_publicada(LocalDate.of(2021, 05, 12));
@@ -104,7 +104,7 @@ public class AutorRepositoryTest {
         autor.getLivros().add(livro);
         autor.getLivros().add(livro2);
         autorRepository.save(autor);
-        // livroRepository.saveAll(autor.getLivros());  //Com o cascade não precisaria utilizar essa linha
+        // livroRepository.saveAll(autorId.getLivros());  //Com o cascade não precisaria utilizar essa linha
 
     }
 
@@ -118,8 +118,8 @@ public class AutorRepositoryTest {
         List<Livro> livroList = livroRepository.findByAutor(autor);
         autor.setLivros(livroList);
 
-//       //essa é a melhor forma para ver os livros do autor
-//        var buscarPorLivro = livroRepository.findByAutor(autor);
+//       //essa é a melhor forma para ver os livros do autorId
+//        var buscarPorLivro = livroRepository.findByAutor(autorId);
 //        buscarPorLivro.forEach(System.out::println);
         autor.getLivros().forEach(System.out::println);
 

@@ -16,6 +16,10 @@ public class TransacoesTest {
     TransacoesService transacoesService;
 
     @Test
+    void TransacaoEstadoManaged(){
+        transacoesService.atualizarSemAtualizar();
+    }
+    @Test
     public void executar(){
 
         transacoesService.executar();
