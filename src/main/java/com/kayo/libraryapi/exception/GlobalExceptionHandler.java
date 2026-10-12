@@ -2,8 +2,10 @@ package com.kayo.libraryapi.exception;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -62,6 +64,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(error);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseEntity<StandardError> handleAccesDenielException(AccessDeniedException ex, HttpServletRequest request) {
+        StandardError standardError = new StandardError(
+                Instant.now(),
+                HttpStatus.FORBIDDEN.value(),
+                "Acesso negado",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(standardError);
     }
 
 

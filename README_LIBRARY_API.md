@@ -1,697 +1,545 @@
 # Library API
 
-API REST para gerenciamento de livros e autores, desenvolvida com Java e Spring Boot como projeto de estudo e prática de desenvolvimento de APIs.
+API REST para gerenciamento de livros, autores e usuários, desenvolvida com Java e Spring Boot.
 
-> **Status do projeto:** desenvolvimento em andamento  
-> **Ponto atual do curso:** Seção 7 — Aprendendo Mais Recursos desenvolvendo a API de Livros  
-> **Último vídeo concluído:** 103 — Melhorando a tratativa de erros para código mais limpo
+## Sobre o projeto
 
----
+O projeto tem como objetivo praticar o desenvolvimento de uma API REST utilizando o ecossistema Spring, aplicando conceitos de arquitetura em camadas, persistência de dados, DTOs, validação, tratamento de exceções, consultas dinâmicas, autenticação e autorização.
 
-## Como executar o projeto
+## Tecnologias
 
-Para gerar o build e instalar as dependências do projeto com Maven Wrapper:
-
-```bash
-./mvnw clean install
-```
-
-> **Observação:** caso o comando acima apresente falhas relacionadas aos testes, utilize `-DskipTests` para realizar o build sem executar os testes:
-
-```bash
-./mvnw clean install -DskipTests
-```
-
-O parâmetro `-DskipTests` faz com que os testes não sejam executados durante o processo de build.
-
-# 1. Sobre a API
-
-A aplicação tem como objetivo disponibilizar uma API REST para cadastro e gerenciamento de:
-
-- Livros
-- Autores
-
-A API foi construída seguindo uma separação de responsabilidades entre as camadas de controller, service, repository, DTOs, entidades e mapeadores.
-
-O projeto também está sendo utilizado para praticar conceitos importantes do ecossistema Spring, como:
-
+- Java
 - Spring Boot
-- Spring Web / REST
+- Spring Web
 - Spring Data JPA
 - Hibernate
+- Spring Security
+- PostgreSQL
 - Bean Validation
 - MapStruct
-- PostgreSQL
-- DTO Pattern
-- Tratamento global de exceções
-- Auditoria de entidades
-- Paginação
-- Specifications / consultas dinâmicas
+- Lombok
+- Thymeleaf
+- Maven
+- Git/GitHub
 
----
+## Funcionalidades
 
-# 2. Arquitetura atual
+### Autores
 
-A estrutura principal do projeto está organizada aproximadamente da seguinte forma:
-
-```text
-src/main/java/com/kayo/libraryapi
-├── config
-│   └── DatabaseConfiguration
-│
-├── controller
-│   ├── AutorController
-│   ├── LivroController
-│   └── GenericController
-│
-├── dto
-│   ├── request
-│   │   ├── AutorDTO
-│   │   └── CadastrarLivro
-│   │
-│   └── response
-│       ├── ListAutorDTO
-│       ├── ListExAutorDto
-│       └── ResponseLivro
-│
-├── exception
-│   ├── AutorNotFound
-│   ├── ErrorCampo
-│   ├── GlobalExceptionHandler
-│   └── StandardError
-│
-├── mapper
-│   ├── AutorMapper
-│   └── LivroMapper
-│
-├── model
-│   ├── Autor
-│   ├── GeneroLivro
-│   └── Livro
-│
-├── repository
-│   ├── AutorRepository
-│   └── LivroRepository
-│
-└── Services
-    ├── AutorService
-    ├── LivroService
-    └── TransacoesService
-```
-
-A separação permite que cada camada tenha uma responsabilidade específica.
-
----
-
-# 3. Entidades principais
-
-## Autor
-
-A entidade `Autor` representa um autor cadastrado na aplicação.
-
-Entre os atributos atuais estão:
-
-- `id`
-- `nome`
-- `dataNascimento`
-- `nacionalidade`
-- `dataCadastro`
-- `dataAtualizacao`
-
-O identificador utiliza `UUID`.
-
-Exemplo conceitual:
-
-```java
-@Id
-@GeneratedValue(strategy = GenerationType.UUID)
-private UUID id;
-```
-
-A entidade também possui auditoria JPA configurada para registrar automaticamente datas de criação e atualização.
-
----
-
-## Livro
-
-A entidade `Livro` representa os livros cadastrados.
-
-O modelo utiliza informações como:
-
-- ISBN
-- título
-- data de publicação
-- gênero
-- preço
-- autor
-
-O livro possui relacionamento com `Autor`, permitindo representar a associação entre livros e seus respectivos autores.
-
----
-
-# 4. Auditoria
-
-Foi adicionada auditoria utilizando o mecanismo de auditing do Spring Data JPA.
-
-A ideia é permitir que determinadas informações sejam preenchidas automaticamente pelo framework.
-
-Exemplo:
-
-```java
-@CreatedDate
-@Column(name = "data_cadastro", nullable = false)
-private LocalDateTime dataCadastro;
-
-@LastModifiedDate
-@Column(name = "data_atualizacao", nullable = false)
-private LocalDateTime dataAtualizacao;
-```
-
-Com isso:
-
-- `dataCadastro` registra quando a entidade foi criada.
-- `dataAtualizacao` registra quando a entidade foi modificada.
-
-A entidade utiliza:
-
-```java
-@EntityListeners(AuditingEntityListener.class)
-```
-
----
-
-# 5. DTOs
-
-A API utiliza DTOs para evitar que as entidades JPA sejam utilizadas diretamente como contrato da API.
-
-Existem DTOs para:
-
-- requisições
-- respostas
-- cadastro
-- listagem
-- tratamento de erros
-
-Isso ajuda a separar:
-
-```text
-Banco de dados
-      ↓
-Entidade JPA
-      ↓
-Mapper
-      ↓
-DTO
-      ↓
-API REST
-```
-
-Essa abordagem também evita problemas como exposição desnecessária dos campos das entidades e loops de serialização em relacionamentos.
-
----
-
-# 6. MapStruct
-
-O projeto utiliza **MapStruct** para realizar o mapeamento entre entidades e DTOs.
-
-Atualmente existem mapeadores como:
-
-```text
-AutorMapper
-LivroMapper
-```
-
-A utilização de mappers reduz código repetitivo e deixa os services mais limpos.
-
-Exemplo conceitual:
-
-```java
-@Mapper(componentModel = "spring")
-public interface AutorMapper {
-    ...
-}
-```
-
-Também foi estudada a composição de mappers para obter informações relacionadas durante o mapeamento.
-
----
-
-# 7. Controllers
-
-A aplicação possui controllers responsáveis pela exposição dos endpoints HTTP.
-
-Atualmente existem:
-
-```text
-AutorController
-LivroController
-GenericController
-```
-
-O `GenericController` foi introduzido para reduzir repetição de código e facilitar a criação de operações comuns.
-
----
-
-# 8. API de Autores
-
-A API possui operações relacionadas ao cadastro e gerenciamento de autores.
-
-Entre as funcionalidades implementadas até o ponto atual estão:
-
-- Cadastro de autor
-- Busca de autor
+- Cadastro de autores
+- Busca de autor por ID
 - Listagem de autores
-- Busca de autores com filtros
-- Atualização de autor
-- Exclusão de autor
-- Validação dos dados
-- Tratamento de autor inexistente
-- Respostas padronizadas de erro
+- Pesquisa por nome
+- Pesquisa por nacionalidade
+- Exclusão de autores
+- Validação de dados
+- Controle de acesso baseado em roles
 
-Também foi implementada pesquisa de autores utilizando recursos do Spring Data JPA.
+### Livros
 
----
-
-# 9. API de Livros
-
-A API de livros possui operações para gerenciamento dos livros.
-
-Entre as funcionalidades trabalhadas até o vídeo 103:
-
-- Cadastro de livro
-- Consulta de livro
-- Listagem
-- Atualização
-- Exclusão
-- Validação dos dados
-- Validação de ISBN duplicado
-- Validação da data/ano de publicação
-- Paginação
-- Relacionamento com autor
-- Retorno de dados através de DTOs
-- Tratamento padronizado de erros
-
----
-
-# 10. Contratos da API
-
-A API está sendo desenvolvida com contratos HTTP bem definidos.
-
-Exemplo de consulta de detalhes:
-
-```text
-GET /livros/{id}
-```
-
-Resposta de sucesso:
-
-```http
-200 OK
-```
-
-Exemplo conceitual de resposta:
-
-```json
-{
-  "id": "uuid",
-  "isbn": "string",
-  "titulo": "string",
-  "dataPublicacao": "date",
-  "genero": "enum",
-  "preco": 0,
-  "autor": {
-    "nome": "string",
-    "dataNascimento": "date",
-    "nacionalidade": "string"
-  }
-}
-```
-
-Quando o recurso não é encontrado, a API utiliza:
-
-```http
-404 Not Found
-```
-
----
-
-# 11. Bean Validation
-
-Foi implementada validação de dados utilizando Bean Validation.
-
-A validação é utilizada para garantir que as requisições recebidas pela API respeitem as regras definidas.
-
-Entre as validações estudadas/implementadas:
-
-- Campos obrigatórios
-- Tamanho de campos
-- Formato de dados
-- Regras específicas de negócio
+- Cadastro de livros
+- Busca de livros
+- Listagem de livros
+- Atualização de livros
+- Exclusão de livros
 - Validação de ISBN
 - Validação de data de publicação
+- Relacionamento entre livros e autores
+- Paginação
+- Filtros dinâmicos
+- Specifications
+- Query By Example
 
-Também foi criado um `ExceptionHandler` específico para lidar com erros de validação.
+### Usuários
 
----
+- Cadastro de usuários
+- Persistência de usuários no banco de dados
+- Criptografia de senhas com BCrypt
+- Autenticação utilizando Spring Security
+- Autorização baseada em roles
 
-# 12. Tratamento de exceções
+## Arquitetura
 
-A aplicação possui tratamento global de exceções através de:
+O projeto está organizado em camadas:
 
-```text
-GlobalExceptionHandler
-```
+    src/main/java/com/kayo/libraryapi
+    ├── config
+    │   ├── DatabaseConfiguration
+    │   ├── SecurityConfiguration
+    │   └── WebConfiguration
+    │
+    ├── controller
+    │   ├── AutorController
+    │   ├── GenericController
+    │   ├── LivroController
+    │   ├── LoginController
+    │   ├── UserDetailsImpl
+    │   ├── UserDetailsImplService
+    │   └── UsuarioController
+    │
+    ├── dto
+    │   ├── request
+    │   │   ├── AutorDTO
+    │   │   ├── CadastrarLivro
+    │   │   └── CadastrarUsuario
+    │   │
+    │   └── response
+    │       ├── ListAutorDTO
+    │       ├── ListExAutorDto
+    │       └── LivroResponse
+    │
+    ├── exception
+    │   ├── AutorNotFound
+    │   ├── ErrorCampo
+    │   ├── GlobalExceptionHandler
+    │   └── StandardError
+    │
+    ├── mapper
+    │   ├── AutorMapper
+    │   ├── LivroMapper
+    │   └── UsuarioMapper
+    │
+    ├── model
+    │   ├── Autor
+    │   ├── GeneroLivro
+    │   ├── Livro
+    │   └── Usuario
+    │
+    ├── repository
+    │   ├── AutorRepository
+    │   ├── LivroRepository
+    │   ├── SpecsLivro
+    │   └── UsuarioRepository
+    │
+    └── Services
+        ├── AutorService
+        ├── LivroService
+        ├── TransacoesService
+        └── UsuarioService
 
-Além disso, existem estruturas para representar os erros:
+## DTOs
 
-```text
-StandardError
-ErrorCampo
-```
+O projeto utiliza DTOs para separar os objetos utilizados pela API das entidades persistidas no banco de dados.
 
-O objetivo é impedir que a API retorne respostas inconsistentes quando ocorre uma exceção.
+### DTOs de Request
 
-A ideia é padronizar respostas como:
-
-```json
-{
-  "timestamp": "2026-10-04T14:00:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Autor não encontrado",
-  "path": "/autores/..."
-}
-```
-
-Erros de validação podem apresentar os campos que causaram o problema.
-
----
-
-# 13. Regras de negócio
-
-Além das validações básicas, a API possui regras de negócio.
+São utilizados para receber dados enviados pelo cliente.
 
 Exemplos:
 
-- Não permitir ISBN duplicado.
-- Não permitir determinadas datas de publicação inválidas.
-- Verificar se o autor existe antes de associá-lo a um livro.
-- Retornar erro apropriado quando um recurso não existe.
+- `AutorDTO`
+- `CadastrarLivro`
+- `CadastrarUsuario`
 
-As regras ficam concentradas principalmente na camada de service, evitando colocar lógica de negócio diretamente nos controllers.
+### DTOs de Response
 
----
+São utilizados para controlar os dados retornados pela API.
 
-# 14. Camada Service
+Exemplos:
 
-As principais classes de serviço são:
+- `ListAutorDTO`
+- `ListExAutorDto`
+- `LivroResponse`
 
-```text
-AutorService
-LivroService
-TransacoesService
-```
+Fluxo de entrada:
 
-A camada Service é responsável por coordenar as operações da aplicação.
-
-Fluxo simplificado:
-
-```text
-HTTP Request
-     ↓
-Controller
-     ↓
-Service
-     ↓
-Repository
-     ↓
-Database
-```
-
-Na resposta:
-
-```text
-Database
-     ↓
-Repository
-     ↓
-Service
-     ↓
-Mapper
-     ↓
-DTO
-     ↓
-Controller
-     ↓
-HTTP Response
-```
-
----
-
-# 15. Repository
-
-A aplicação utiliza Spring Data JPA para acesso ao banco.
-
-Principais repositories:
-
-```text
-AutorRepository
-LivroRepository
-```
-
-Eles são responsáveis pelas operações de persistência e consulta.
-
-Também foram estudados recursos como:
-
-- Query Methods
-- `Query By Example`
-- Specifications
-- consultas com filtros
-- paginação
-
----
-
-# 16. Paginação
-
-A API possui suporte a consultas paginadas.
-
-A paginação é importante principalmente para endpoints de listagem, evitando retornar uma quantidade potencialmente muito grande de registros de uma única vez.
-
-Conceitualmente:
-
-```text
-GET /livros?page=0&size=10
-```
-
-O índice da página começa em `0`.
-
----
-
-# 17. Specifications
-
-A partir da seção 7, o projeto começou a explorar recursos mais avançados de consulta do Spring Data JPA.
-
-Foram estudados:
-
-- `Specification`
-- filtros dinâmicos
-- composição de Specifications
-- `JpaSpecificationExecutor`
-
-Esses recursos permitem montar consultas de acordo com os parâmetros enviados pelo cliente.
-
-Exemplo conceitual:
-
-```text
-GET /livros?titulo=Java&genero=FICCAO
-```
-
-A API pode combinar os filtros para construir a consulta necessária.
-
----
-
-# 18. Generic Controller
-
-Foi criado um controller genérico para reduzir duplicação de código entre controllers.
-
-A ideia é utilizar generics para abstrair operações que possuem comportamento semelhante.
-
-Estrutura conceitual:
-
-```java
-GenericController<T, ID>
-```
-
-Isso permite reutilizar operações comuns para diferentes recursos da API.
-
----
-
-# 19. Transações
-
-O projeto possui uma classe:
-
-```text
-TransacoesService
-```
-
-para trabalhar com operações transacionais.
-
-Transações são importantes quando uma operação envolve várias alterações que precisam ser tratadas como uma única unidade.
-
-Exemplo conceitual:
-
-```text
-Início da transação
+    Request
        ↓
-Operação 1
+    DTO
        ↓
-Operação 2
+    Mapper
        ↓
-Operação 3
+    Entity
        ↓
-Commit
-```
+    Repository
 
-Se ocorrer uma falha durante a operação, o comportamento transacional pode evitar que o banco fique em um estado inconsistente.
+Fluxo de saída:
 
----
+    Repository
+       ↓
+    Entity
+       ↓
+    Mapper
+       ↓
+    DTO
+       ↓
+    Response
 
-# 20. Tecnologias utilizadas
+## MapStruct
 
-| Tecnologia | Utilização |
-|---|---|
-| Java | Linguagem principal |
-| Spring Boot | Framework da aplicação |
-| Spring Web | API REST |
-| Spring Data JPA | Persistência |
-| Hibernate | ORM |
-| PostgreSQL | Banco de dados |
-| Bean Validation | Validação |
-| MapStruct | Mapeamento Entity/DTO |
-| Lombok | Redução de código boilerplate |
-| Maven | Gerenciamento de dependências |
-| Git | Controle de versão |
-| GitHub | Hospedagem do código |
+Foi implementado o uso do MapStruct para realizar o mapeamento entre DTOs e entidades.
 
----
+Mappers utilizados:
 
-# 21. Progresso no curso
+- `AutorMapper`
+- `LivroMapper`
+- `UsuarioMapper`
 
-## Seção 6 — Introdução ao Bean Validation e Melhorias para API
+O MapStruct permite centralizar a conversão entre os objetos e reduzir código repetitivo.
 
-Concluída.
+Além do mapeamento simples, o `LivroMapper` possui mapeamentos personalizados para campos que não devem ser preenchidos diretamente ou que dependem de outras informações.
 
-Conteúdos vistos:
+Por exemplo, o relacionamento entre livro e autor é tratado durante o mapeamento, utilizando o `AutorRepository` para localizar o autor correspondente.
 
-- Bean Validation
-- Validação de campos
-- Exception Handler
-- Tipos de validação no Spring
-- Query By Example
+## Spring Security
 
-## Seção 7 — Aprendendo Mais Recursos desenvolvendo a API de Livros
+Foi implementada uma configuração própria de segurança utilizando Spring Security.
 
-**Em andamento.**
+A configuração está centralizada em `SecurityConfiguration`.
 
-Conteúdos concluídos até o vídeo 103:
+Foram adicionadas as seguintes configurações:
 
-- Especificação da API
-- Estruturas básicas da API
-- Endpoint de cadastro de livro
+- `@Configuration`
+- `@EnableWebSecurity`
+- `@EnableMethodSecurity`
+- `SecurityFilterChain`
+- `PasswordEncoder`
+
+O `@EnableMethodSecurity` habilita a segurança em nível de método, permitindo utilizar anotações como `@PreAuthorize`, `@Secured` e anotações JSR-250.
+
+## SecurityFilterChain
+
+A aplicação possui uma configuração personalizada através de `SecurityFilterChain`.
+
+A configuração atual possui:
+
+- CSRF desabilitado
+- Form Login
+- HTTP Basic
+- Cadastro de usuário liberado
+- Demais endpoints protegidos por autenticação
+
+O endpoint `POST /usuario` pode ser acessado sem autenticação para permitir o cadastro de novos usuários.
+
+Os demais endpoints exigem um usuário autenticado.
+
+## Autenticação
+
+Foi implementado um fluxo de autenticação utilizando usuários armazenados no banco de dados.
+
+Foram adicionados:
+
+- `UserDetailsImpl`
+- `UserDetailsImplService`
+- `UsuarioRepository`
+- `UsuarioService`
+
+O `UserDetailsImplService` é responsável por localizar o usuário no banco de dados e fornecer as informações necessárias para o Spring Security realizar a autenticação.
+
+Fluxo:
+
+    Login
+      ↓
+    Spring Security
+      ↓
+    UserDetailsService
+      ↓
+    UsuarioRepository
+      ↓
+    Usuario
+      ↓
+    UserDetails
+      ↓
+    Autenticação
+
+## Criptografia de senhas
+
+As senhas dos usuários são protegidas utilizando BCrypt através do `PasswordEncoder`.
+
+A configuração utiliza `BCryptPasswordEncoder`.
+
+No cadastro do usuário, a senha recebida pelo DTO é criptografada antes de ser persistida.
+
+Fluxo:
+
+    Senha original
+          ↓
+    PasswordEncoder
+          ↓
+    BCrypt
+          ↓
+    Hash da senha
+          ↓
+    Banco de dados
+
+A senha original não é armazenada diretamente no banco de dados.
+
+## Autorização por Roles
+
+Além da autenticação, foi implementado controle de autorização baseado em roles.
+
+Os Controllers utilizam `@PreAuthorize` para determinar quais perfis podem executar determinadas operações.
+
+Exemplo de regra utilizada:
+
+`@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'USER')")`
+
+Para operações administrativas:
+
+`@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")`
+
+Dessa forma, diferentes operações podem possuir diferentes níveis de acesso.
+
+### Roles utilizadas
+
+- `USER`
+- `GERENTE`
+- `ADMIN`
+
+Exemplo de comportamento:
+
+- `USER`: acesso às operações permitidas para usuários comuns
+- `GERENTE`: acesso às operações permitidas para gerentes
+- `ADMIN`: acesso às operações administrativas
+
+## Login com Thymeleaf
+
+Foi criada uma página de login utilizando Thymeleaf.
+
+Arquivo:
+
+`src/main/resources/templates/login.html`
+
+A rota `/login` é registrada através da configuração MVC da aplicação.
+
+A `WebConfiguration` utiliza um `ViewController` para direcionar a rota `/login` para o template de login.
+
+Isso permite utilizar uma página própria de login integrada ao Spring Security.
+
+## Specifications
+
+Foi implementado o uso de `Specification` do Spring Data JPA para construir consultas dinâmicas.
+
+A classe responsável pelos filtros é:
+
+`SpecsLivro`
+
+Foram criadas Specifications para diferentes critérios de pesquisa, como:
+
+- ISBN
+- Título
+- Gênero
+- Ano de publicação
+- Nome do autor
+
+Isso permite combinar diferentes filtros sem precisar criar um método diferente no Repository para cada combinação possível.
+
+## Filtros de livros
+
+A busca de livros pode utilizar filtros dinâmicos.
+
+Entre os filtros implementados estão:
+
+- ISBN
+- Título
+- Gênero
+- Ano de publicação
+- Autor
+
+As Specifications utilizam a API Criteria do JPA para construir as consultas.
+
+Também foram utilizadas operações como `LIKE` e `UPPER` para permitir pesquisas textuais sem depender diretamente da capitalização informada pelo usuário.
+
+## Relacionamento entre Livro e Autor
+
+O projeto possui relacionamento entre livros e autores.
+
+Durante o mapeamento de um novo livro, o `LivroMapper` pode utilizar o `AutorRepository` para localizar o autor informado no cadastro.
+
+Dessa forma, o DTO de cadastro não precisa receber diretamente uma entidade `Autor`.
+
+Fluxo:
+
+    CadastrarLivro
+          ↓
+    LivroMapper
+          ↓
+    AutorRepository
+          ↓
+    Autor
+          ↓
+    Livro
+          ↓
+    LivroRepository
+
+## Tratamento global de exceções
+
+Foi implementado um tratamento global de exceções através da classe `GlobalExceptionHandler`.
+
+A classe utiliza `@RestControllerAdvice` para centralizar o tratamento dos erros da aplicação.
+
+Entre os erros tratados estão:
+
+- Autor não encontrado
+- Erros de validação
+- Acesso negado
+- Erros inesperados
+
+## Erros de validação
+
+Erros provenientes de `MethodArgumentNotValidException` são convertidos para uma estrutura padronizada.
+
+Cada erro possui informações como:
+
+- Campo
+- Mensagem de erro
+
+Isso permite que a API retorne respostas mais organizadas para erros de validação.
+
+## Acesso negado
+
+Também foi implementado tratamento para `AccessDeniedException`.
+
+Quando um usuário autenticado tenta acessar um recurso para o qual não possui autorização, a API retorna uma resposta HTTP `403 Forbidden`.
+
+Isso integra o tratamento de erros da aplicação ao sistema de autorização do Spring Security.
+
+## Resposta padronizada de erros
+
+A aplicação utiliza as classes:
+
+- `StandardError`
+- `ErrorCampo`
+
+para manter um formato padronizado nas respostas de erro.
+
+As respostas possuem informações como:
+
+- Timestamp
+- Status HTTP
+- Título do erro
+- Mensagem
+- URI da requisição
+- Erros específicos dos campos, quando aplicável
+
+## WebConfiguration
+
+Foi criada uma configuração MVC através de `WebConfiguration`.
+
+Ela é responsável por registrar a rota da página de login.
+
+A configuração utiliza:
+
+- `@Configuration`
+- `@EnableWebMvc`
+- `WebMvcConfigurer`
+- `ViewControllerRegistry`
+
+A rota `/login` é direcionada para o template `login.html`.
+
+## Controle de acesso nos Controllers
+
+As operações dos Controllers passaram a utilizar autorização baseada em roles.
+
+Exemplo:
+
+`@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'USER')")`
+
+Operações administrativas podem utilizar:
+
+`@PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")`
+
+Isso permite que a regra de autorização fique próxima da operação que está sendo protegida.
+
+## Banco de dados
+
+A aplicação utiliza PostgreSQL como banco de dados e Spring Data JPA/Hibernate para persistência.
+
+Os Repositories utilizados incluem:
+
+- `AutorRepository`
+- `LivroRepository`
+- `UsuarioRepository`
+
+A persistência segue o fluxo:
+
+    Controller
+       ↓
+    Service
+       ↓
+    Repository
+       ↓
+    JPA / Hibernate
+       ↓
+    PostgreSQL
+
+## Services
+
+A lógica de negócio está organizada em Services.
+
+Services presentes no projeto:
+
+- `AutorService`
+- `LivroService`
+- `UsuarioService`
+- `TransacoesService`
+
+Os Controllers delegam as operações de negócio para os Services, evitando concentrar regras diretamente nos Controllers.
+
+## Transações
+
+O projeto possui um Service específico para operações relacionadas a transações:
+
+`TransacoesService`
+
+Essa separação permite centralizar operações que necessitam de controle transacional.
+
+## Testes
+
+O projeto possui testes utilizando o ecossistema de testes do Spring.
+
+Entre os testes presentes estão:
+
+- `AutorRepositoryTest`
+- `LivroRepositoryTest`
+- `TransacoesTest`
+- `ApplicationTests`
+
+Os testes são utilizados para verificar o comportamento da aplicação e principalmente das operações relacionadas à persistência.
+
+## Objetivo do projeto
+
+Este projeto está sendo utilizado como prática para aprofundar conhecimentos em:
+
+- Java
+- Spring Boot
+- Spring Web
+- Spring Data JPA
+- Hibernate
+- PostgreSQL
+- DTOs
 - MapStruct
-- Mapper
-- Salvamento de livro no banco
-- Interface genérica
-- Tratamento de erros
-- Detalhes do livro
-- Composição de mappers
+- Bean Validation
+- Tratamento de exceções
+- Specifications
+- Query By Example
+- Spring Security
+- Autenticação
+- Autorização
+- Roles
+- BCrypt
+- Thymeleaf
+- Testes automatizados
+- Arquitetura em camadas
 
-### Próximo conteúdo
+## Próximos passos
 
-O próximo vídeo é:
+Possíveis evoluções para o projeto:
 
-```text
-104 — Obtendo detalhes do livro - Mapstruct utilizando composição de outro mapper
-```
+- Melhorar a documentação da API
+- Adicionar Swagger/OpenAPI
+- Aumentar a cobertura de testes
+- Criar testes para autenticação e autorização
+- Melhorar o tratamento de exceções do Spring Security
+- Implementar paginação e ordenação de forma mais completa
+- Adicionar migrations com Flyway
+- Criar Dockerfile
+- Criar Docker Compose
+- Melhorar o gerenciamento de configurações e secrets
+- Evoluir a autenticação para JWT
+- Implementar refresh token
+- Adicionar observabilidade e logs estruturados
 
-Depois ainda estão previstos conteúdos como:
+## Status
 
-- Contrato de exclusão de livros
-- Specifications do Spring Data JPA
-- Specifications para Livro
-- Funções do banco através de Specification
-- Joins
-- Atualização de livros
-- Validação de ISBN duplicado
-- Validação do ano/data de publicação
-- Pesquisa paginada
-
----
-
-# 22. Estado atual
-
-Neste momento a API já possui uma estrutura bastante próxima de uma aplicação REST organizada em camadas.
-
-### Já implementado
-
-- [x] Estrutura Spring Boot
-- [x] Entidade Autor
-- [x] Entidade Livro
-- [x] Repositories
-- [x] Services
-- [x] Controllers
-- [x] DTOs
-- [x] MapStruct
-- [x] Relacionamento entre Livro e Autor
-- [x] Auditoria JPA
-- [x] Bean Validation
-- [x] Exception Handler
-- [x] Respostas padronizadas de erro
-- [x] Regras de negócio
-- [x] Paginação
-- [x] Generic Controller
-- [x] Query By Example
-- [x] Introdução a Specifications
-- [x] Operações de CRUD
-- [x] Busca de autores
-- [x] Validações de ISBN/data
-
-### Ainda em desenvolvimento
-
-- [ ] Finalização da implementação de Specifications
-- [ ] Joins utilizando Specifications
-- [ ] Atualização completa de livros
-- [ ] Finalização das regras de validação
-- [ ] Spring Security
-- [ ] JWT
-- [ ] OAuth2
-- [ ] Docker
-- [ ] Deploy na AWS
-- [ ] Testes automatizados
-
-> Os itens acima fazem parte do desenvolvimento posterior da aplicação/curso e ainda não devem ser considerados funcionalidades concluídas neste ponto do projeto.
-
----
-
-# 23. Objetivo do projeto
-
-O objetivo não é apenas criar um CRUD simples.
-
-O projeto está sendo utilizado para desenvolver domínio sobre:
-
-- construção de APIs REST;
-- arquitetura em camadas;
-- persistência com JPA/Hibernate;
-- relacionamentos entre entidades;
-- DTOs;
-- mapeamento com MapStruct;
-- validação;
-- tratamento de exceções;
-- regras de negócio;
-- consultas avançadas;
-- paginação;
-- Specifications;
-- generics;
-- boas práticas de desenvolvimento com Spring Boot.
-
-A API continuará evoluindo conforme o desenvolvimento das próximas seções do projeto.
+Projeto em desenvolvimento e utilizado como projeto de estudo para aprofundamento em desenvolvimento Backend com Java e Spring Boot.

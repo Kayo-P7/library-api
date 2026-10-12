@@ -7,14 +7,14 @@ import com.kayo.libraryapi.dto.response.ListExAutorDto;
 import com.kayo.libraryapi.model.Autor;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/autorId")
+@RequestMapping("/autor")
 public class AutorController implements GenericController {
 
     private final AutorService autorService;
@@ -24,6 +24,7 @@ public class AutorController implements GenericController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN', 'GERENTE')")
     public ResponseEntity<Void> save(@RequestBody @Valid AutorDTO dto) {
 
         Autor autor = autorService.save(dto);
@@ -35,6 +36,7 @@ public class AutorController implements GenericController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'USER')")
     public ResponseEntity<AutorDTO> buscar(@PathVariable("id") String id) {
 
 
@@ -45,6 +47,7 @@ public class AutorController implements GenericController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE', 'USER')")
     public ResponseEntity<ListExAutorDto>pesquisa(
             @RequestParam(value = "nome", required = false) String nome, @RequestParam(value = "nacionalidade", required = false) String nacionalidade) {
 
@@ -54,6 +57,7 @@ public class AutorController implements GenericController {
 
 
     @DeleteMapping("{id}")
+    @PreAuthorize("hasRole('ADMIN', 'GERENTE')")
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         autorService.delete(id);
         return ResponseEntity.noContent().build();

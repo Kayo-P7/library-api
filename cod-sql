@@ -36,3 +36,5 @@ id_usuario uuid
      id_autor uuid not null references autor(id),
      constraint chk_genero check (genero in ('FICCAO', 'FANTASIA', 'MISTERIO', 'ROMANCE', 'BIOGRAFIA', 'CIENCIA'))
  );
+
+CREATE TABLE usuario(id uuid primary key, login varchar(20) not null unique, senha varchar(200) not null, roles varchar[]);

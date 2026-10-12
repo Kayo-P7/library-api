@@ -1,6 +1,7 @@
 package com.kayo.libraryapi.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "autor", schema = "public")
 @Getter
 @Setter
@@ -64,7 +65,6 @@ public class Autor {
 
     @OneToMany(mappedBy = "autor", cascade = CascadeType.ALL) // um autorId para muitos livros
     // mappedBy aponta para o ATRIBUTO "autorId" que está dentro da classe Livro
-
     private List<Livro> livros = new ArrayList<>();
 
 
